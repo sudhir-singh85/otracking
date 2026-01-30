@@ -1,0 +1,199 @@
+{
+  "datasets": [
+    {
+      "name": "e2af315d",
+      "displayName": "ordercountbyproductcategory",
+      "queryLines": [
+        "USE CATALOG `dev`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "Select productcategory,count(distinct orderno) as totalorders\n",
+        "from dev.tracking_sl.order\n",
+        "group by productcategory"
+      ]
+    },
+    {
+      "name": "ad23afce",
+      "displayName": "MonthlyStats",
+      "queryLines": [
+        "USE CATALOG `wrk_databricks_quest_001`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "select orderno,orderdate,estimatedcost,deliverycost\n",
+        "from dev.tracking_sl.order"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "2e681506",
+      "displayName": "Orders",
+      "layout": [
+        {
+          "widget": {
+            "name": "b5468df7",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "e2af315d",
+                  "fields": [
+                    {
+                      "name": "productcategory",
+                      "expression": "`productcategory`"
+                    },
+                    {
+                      "name": "sum(totalorders)",
+                      "expression": "SUM(`totalorders`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "productcategory",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(totalorders)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "25bda86f",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ad23afce",
+                  "fields": [
+                    {
+                      "name": "monthly(orderdate)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `orderdate`)"
+                    },
+                    {
+                      "name": "sum(estimatedcost)",
+                      "expression": "SUM(`estimatedcost`)"
+                    },
+                    {
+                      "name": "sum(deliverycost)",
+                      "expression": "SUM(`deliverycost`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "area",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(orderdate)",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "sum(estimatedcost)"
+                    },
+                    {
+                      "fieldName": "sum(deliverycost)"
+                    }
+                  ]
+                },
+                "label": {
+                  "show": false
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
