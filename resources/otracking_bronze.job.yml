@@ -1,0 +1,12 @@
+# Bronze ingestion job.
+# Single task wrapping the existing Bronze orchestration notebook, unchanged:
+#   etl/load_bronze -> notebooks/bronze_load -> dev.control.bronze_ingestion_config
+# No schedule. No compute block: the task runs on serverless jobs compute.
+resources:
+  jobs:
+    otracking_bronze:
+      name: otracking_bronze
+      tasks:
+        - task_key: load_bronze
+          notebook_task:
+            notebook_path: ../etl/load_bronze.ipynb
