@@ -1,0 +1,63 @@
+# CI for the OTracking Databricks Asset Bundle.
+#
+# Scope: validation ONLY. This workflow never deploys the bundle, never runs a
+# Databricks job, and never creates Azure resources.
+#
+# Authentication: GitHub Actions OIDC -> Databricks workload identity federation
+# (DATABRICKS_AUTH_TYPE=github-oidc). No client secret or token is stored.
+# Configured outside this file, in GitHub repo settings -> Variables (not secrets;
+# neither value is sensitive):
+#   DATABRICKS_CLIENT_ID       Application (client) ID of the Databricks service
+#                              principal that owns the federation policy.
+#   DATABRICKS_TOKEN_AUDIENCE  Must equal the "audiences" value of that policy
+#                              (Databricks recommends the account ID).
+# The workspace host is read from databricks.yml (targets.dev.workspace.host).
+
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read  # check out the repository
+  id-token: write # request the GitHub OIDC token exchanged for a Databricks token
+
+# Cancel superseded runs for the same pull request.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate-bundle:
+    name: Validate Databricks bundle (dev)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_TOKEN_AUDIENCE: ${{ vars.DATABRICKS_TOKEN_AUDIENCE }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Databricks CLI
+        uses: databricks/setup-cli@v1.26.0
+
+      - name: Show Databricks CLI version
+        run: databricks --version
+
+      - name: Check OIDC authentication is configured
+        run: |
+          if [ -z "${DATABRICKS_CLIENT_ID}" ] || [ -z "${DATABRICKS_TOKEN_AUDIENCE}" ]; then
+            echo "::error::Repository variables DATABRICKS_CLIENT_ID and/or DATABRICKS_TOKEN_AUDIENCE are not set."
+            exit 1
+          fi
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL}" ]; then
+            echo "::error::GitHub did not provide an OIDC token for this run (id-token permission unavailable, e.g. pull request from a fork)."
+            exit 1
+          fi
+
+      - name: Validate bundle (dev target)
+        run: databricks bundle validate --target dev

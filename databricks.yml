@@ -1,0 +1,16 @@
+# Databricks Asset Bundle for the OTracking project.
+# Foundation only: a single DEV target and the Bronze job. No production target yet.
+bundle:
+  name: otracking
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    # Development mode: resources are prefixed with "[dev <user>]",
+    # deployed under the user's own .bundle folder, and schedules/triggers are paused.
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-3548949177456172.12.azuredatabricks.net
