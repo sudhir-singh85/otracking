@@ -1,0 +1,63 @@
+# CD for the OTracking Databricks Asset Bundle.
+#
+# Scope: deploy the validated bundle to the DEV Databricks workspace.
+# This workflow does not execute the Bronze job.
+#
+# Authentication: GitHub Actions OIDC -> Databricks workload identity federation.
+# The GitHub "dev" environment is used so that only the dev branch can
+# authenticate through the DEV federation policy.
+
+name: Deploy Databricks bundle to DEV
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Databricks bundle (dev)
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 15
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_TOKEN_AUDIENCE: ${{ vars.DATABRICKS_TOKEN_AUDIENCE }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Databricks CLI
+        uses: databricks/setup-cli@v1.26.0
+
+      - name: Show Databricks CLI version
+        run: databricks --version
+
+      - name: Check OIDC authentication is configured
+        run: |
+          if [ -z "${DATABRICKS_CLIENT_ID}" ] || [ -z "${DATABRICKS_TOKEN_AUDIENCE}" ]; then
+            echo "::error::Repository variables DATABRICKS_CLIENT_ID and/or DATABRICKS_TOKEN_AUDIENCE are not set."
+            exit 1
+          fi
+
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL}" ]; then
+            echo "::error::GitHub did not provide an OIDC token for this run."
+            exit 1
+          fi
+
+      - name: Validate Databricks bundle
+        run: databricks bundle validate --target dev
+
+      - name: Deploy Databricks bundle
+        run: databricks bundle deploy --target dev
